@@ -159,6 +159,14 @@
             animation: scroll-text var(--scroll-duration, 5s) linear infinite alternate;
         }
         
+        /* Short desktop screens: tighten so everything fits without page scroll */
+        @media (min-width: 768px) and (max-height: 820px) {
+            main > header.spatial-panel { padding-top: 1rem; padding-bottom: 1rem; }
+            aside nav { gap: 0.75rem; }
+            aside nav a.spatial-block { width: 3rem; height: 3rem; padding: 0; }
+            aside h2, section h2 { margin-bottom: 1rem; padding-bottom: 0.75rem; }
+        }
+
         /* Scanlines & Vignette Overlay */
         .scanlines-vignette {
             background: 
@@ -196,23 +204,23 @@
     <canvas id="fg-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-50"></canvas>
 
     <!-- Main Content Wrapper (Grid Layout) -->
-    <main class="relative z-10 w-full max-w-7xl mx-auto p-4 md:p-8 flex-grow flex flex-col gap-8">
+    <main class="relative z-10 w-full max-w-7xl mx-auto p-4 md:px-8 md:py-6 flex-grow flex flex-col gap-8 md:gap-6 md:h-screen md:h-[100dvh]">
         
         <!-- HEADER (Holographic Banner) -->
-        <header class="spatial-panel p-8 text-center flex flex-col justify-center items-center">
+        <header class="spatial-panel p-8 md:py-6 shrink-0 text-center flex flex-col justify-center items-center">
             <h1 class="leading-none text-4xl md:text-6xl font-bold text-cyan-300 neon-glow" style="font-family: 'Bungee Hairline', sans-serif;">
                 dbgdungeon
             </h1>
         </header>
 
         <!-- 3-COLUMN GRID STRUCTURE -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch md:h-[85vh]">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch md:flex-1 md:min-h-0">
             
             <!-- LEFT SECTION: Social Links (Small) -->
-            <aside class="spatial-panel col-span-1 md:col-span-2 p-6 flex flex-col items-center h-full">
+            <aside class="spatial-panel col-span-1 md:col-span-2 p-6 flex flex-col items-center h-full md:min-h-0">
                 <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">Connect</h2>
                 
-                <nav class="flex flex-row md:flex-col gap-5 w-full flex-wrap justify-center items-center flex-grow">
+                <nav class="flex flex-row md:flex-col md:flex-nowrap gap-5 w-full flex-wrap justify-center items-center flex-grow md:min-h-0 md:overflow-y-auto no-scrollbar">
                     <!-- CurseForge -->
                     <a href="https://www.curseforge.com/members/deathbygin/projects" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="CurseForge">
                         <i class="fa-solid fa-fire"></i>
@@ -245,7 +253,7 @@
             </aside>
 
             <!-- CENTER SECTION: The Vault (Large) -->
-            <section class="spatial-panel col-span-1 md:col-span-7 pt-6 px-6 pb-0 flex flex-col h-full overflow-hidden">
+            <section class="spatial-panel col-span-1 md:col-span-7 pt-6 px-6 pb-0 flex flex-col h-full overflow-hidden md:min-h-0">
                 <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0 relative z-10 bg-transparent backdrop-blur-sm" style="font-family: 'Libre Barcode 128 Text', cursive;">The Vault</h2>
                 
                 <!-- Repository List -->
@@ -365,7 +373,7 @@
             </section>
 
             <!-- RIGHT SECTION: Featured Project (Small) -->
-            <aside class="spatial-panel col-span-1 md:col-span-3 p-6 flex flex-col h-full">
+            <aside class="spatial-panel col-span-1 md:col-span-3 p-6 flex flex-col h-full md:min-h-0">
                 <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">Featured</h2>
                 
                 <div class="auto-scroll-container mb-2 w-full shrink-0">
@@ -386,7 +394,7 @@
         </div>
         
         <!-- FOOTER -->
-        <footer class="mt-auto py-6 text-center opacity-40 text-sm font-light">
+        <footer class="mt-auto py-6 md:py-0 shrink-0 text-center opacity-40 text-sm font-light">
             <p>DBG's Dungeon &copy; 2026</p>
         </footer>
     </main>
