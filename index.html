@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#030509">
     <title>dbgdungeon</title>
     
     <!-- Tailwind CSS for rapid structural styling -->
@@ -96,7 +97,8 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Hover States for Spatial UI */
+        /* Hover States for Spatial UI (mouse/trackpad only, so taps don't leave "stuck" hovers) */
+        @media (hover: hover) and (pointer: fine) {
         .spatial-hover:hover {
             background: rgba(0, 243, 255, 0.1);
             border-color: var(--spatial-border-highlight);
@@ -105,13 +107,29 @@
             cursor: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L18 9 L11 11 L9 18 Z" fill="%230d2859" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>') 4 4, pointer;
         }
 
+        }
+
         .spatial-text-hover {
             transition: all 0.3s ease;
         }
+        @media (hover: hover) and (pointer: fine) {
         .spatial-text-hover:hover {
             color: #fff;
             text-shadow: 0 0 12px rgba(0, 243, 255, 0.6);
             cursor: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L18 9 L11 11 L9 18 Z" fill="%230d2859" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>') 4 4, pointer;
+        }
+
+        }
+
+        /* Touch feedback: brief glow + press-in when tapped */
+        @media (hover: none), (pointer: coarse) {
+            .spatial-hover:active {
+                background: rgba(0, 243, 255, 0.12);
+                border-color: var(--spatial-border-highlight);
+                transform: scale(0.98);
+                box-shadow: 0 0 24px rgba(0, 243, 255, 0.35);
+                transition-duration: 0.1s;
+            }
         }
 
         /* Interactive Element Cursor Overrides */
@@ -159,6 +177,38 @@
             animation: scroll-text var(--scroll-duration, 5s) linear infinite alternate;
         }
         
+        /* Mobile tuning */
+        html { -webkit-text-size-adjust: 100%; }
+        body { -webkit-tap-highlight-color: transparent; }
+        @media (max-width: 767px) {
+            /* Lighter blur keeps scrolling smooth on phones */
+            .spatial-panel {
+                border-radius: 26px;
+                backdrop-filter: blur(16px) saturate(120%);
+                -webkit-backdrop-filter: blur(16px) saturate(120%);
+            }
+            .spatial-block { border-radius: 20px; }
+            .spatial-block span.text-xs {
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+            }
+            .orb-1, .orb-2, .orb-3 { filter: blur(70px); }
+            .orb-1 { width: 90vw; height: 90vw; }
+            .orb-2 { width: 100vw; height: 100vw; }
+            .orb-3 { width: 70vw; height: 70vw; left: 20%; }
+            /* Respect notches / home indicator */
+            main {
+                padding-left: max(1rem, env(safe-area-inset-left));
+                padding-right: max(1rem, env(safe-area-inset-right));
+                padding-bottom: max(1rem, env(safe-area-inset-bottom));
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .is-scrolling { animation-duration: 20s; }
+            .spatial-panel, .spatial-block, .spatial-text-hover { transition: none; }
+        }
+
         /* Scanlines & Vignette Overlay */
         .scanlines-vignette {
             background: 
@@ -196,72 +246,72 @@
     <canvas id="fg-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-50"></canvas>
 
     <!-- Main Content Wrapper (Grid Layout) -->
-    <main class="relative z-10 w-full max-w-7xl mx-auto p-4 md:p-8 flex-grow flex flex-col gap-8">
+    <main class="relative z-10 w-full max-w-7xl mx-auto p-4 md:p-8 flex-grow flex flex-col gap-5 md:gap-8">
         
         <!-- HEADER (Holographic Banner) -->
-        <header class="spatial-panel p-8 text-center flex flex-col justify-center items-center">
-            <h1 class="leading-none text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-500 neon-glow" style="font-family: 'Bungee Hairline', sans-serif;">
+        <header class="spatial-panel px-6 py-7 md:p-8 text-center flex flex-col justify-center items-center">
+            <h1 class="leading-none text-[2.6rem] sm:text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-500 neon-glow" style="font-family: 'Bungee Hairline', sans-serif;">
                 dbgdungeon
             </h1>
         </header>
 
         <!-- 3-COLUMN GRID STRUCTURE -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch md:h-[85vh]">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-8 items-stretch md:h-[85vh]">
             
             <!-- LEFT SECTION: Social Links (Small) -->
-            <aside class="spatial-panel col-span-1 md:col-span-2 p-6 flex flex-col items-center h-full">
-                <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">Connect</h2>
+            <aside class="spatial-panel col-span-1 md:col-span-2 p-5 md:p-6 flex flex-col items-center h-full">
+                <h2 class="text-3xl font-normal text-white mb-4 md:mb-6 w-full text-center pb-3 md:pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">Connect</h2>
                 
-                <nav class="flex flex-row md:flex-col gap-5 w-full flex-wrap justify-center items-center flex-grow">
+                <nav class="flex flex-row md:flex-col gap-3 md:gap-5 w-full flex-wrap justify-center items-center flex-grow max-w-[18rem] md:max-w-none" aria-label="Social links">
                     <!-- CurseForge -->
-                    <a href="https://www.curseforge.com/members/deathbygin/projects" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="CurseForge">
+                    <a href="https://www.curseforge.com/members/deathbygin/projects" target="_blank" class="spatial-block spatial-hover w-12 h-12 md:w-14 md:h-14 !p-0 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="CurseForge">
                         <i class="fa-solid fa-fire"></i>
                     </a>
                     <!-- Backloggd -->
-                    <a href="https://backloggd.com/u/deathbygin/" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="Backloggd">
+                    <a href="https://backloggd.com/u/deathbygin/" target="_blank" class="spatial-block spatial-hover w-12 h-12 md:w-14 md:h-14 !p-0 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="Backloggd">
                         <i class="fa-solid fa-gamepad"></i>
                     </a>
                     <!-- Discord -->
-                    <a href="https://discord.com/users/443243554236792863" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="Discord">
+                    <a href="https://discord.com/users/443243554236792863" target="_blank" class="spatial-block spatial-hover w-12 h-12 md:w-14 md:h-14 !p-0 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="Discord">
                         <i class="fa-brands fa-discord"></i>
                     </a>
                     <!-- GitHub -->
-                    <a href="https://github.com/deathbygin" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="GitHub">
+                    <a href="https://github.com/deathbygin" target="_blank" class="spatial-block spatial-hover w-12 h-12 md:w-14 md:h-14 !p-0 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="GitHub">
                         <i class="fa-brands fa-github"></i>
                     </a>
                     <!-- NexusMods -->
-                    <a href="https://www.nexusmods.com/profile/Deathbygin" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-cyan-100 relative group" title="NexusMods">
+                    <a href="https://www.nexusmods.com/profile/Deathbygin" target="_blank" class="spatial-block spatial-hover w-12 h-12 md:w-14 md:h-14 !p-0 rounded-full flex items-center justify-center text-cyan-100 relative group" title="NexusMods">
                         <span class="font-black text-2xl font-sans leading-none mt-1">N</span>
                     </a>
                     <!-- Gamebanana -->
-                    <a href="https://gamebanana.com/members/5110417" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-cyan-100 relative group" title="Gamebanana">
+                    <a href="https://gamebanana.com/members/5110417" target="_blank" class="spatial-block spatial-hover w-12 h-12 md:w-14 md:h-14 !p-0 rounded-full flex items-center justify-center text-cyan-100 relative group" title="Gamebanana">
                         <span class="font-black text-xl font-sans leading-none mt-1 tracking-tighter">GB</span>
                     </a>
                     <!-- Ko-fi -->
-                    <a href="https://ko-fi.com/deathbygin" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="Ko-fi">
+                    <a href="https://ko-fi.com/deathbygin" target="_blank" class="spatial-block spatial-hover w-12 h-12 md:w-14 md:h-14 !p-0 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="Ko-fi">
                         <i class="fa-solid fa-mug-hot"></i>
                     </a>
                 </nav>
             </aside>
 
             <!-- CENTER SECTION: The Vault (Large) -->
-            <section class="spatial-panel col-span-1 md:col-span-7 pt-6 px-6 pb-0 flex flex-col h-full overflow-hidden">
-                <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0 relative z-10 bg-transparent backdrop-blur-sm" style="font-family: 'Libre Barcode 128 Text', cursive;">The Vault</h2>
+            <section class="spatial-panel col-span-1 md:col-span-7 pt-5 px-4 md:pt-6 md:px-6 pb-0 flex flex-col h-full overflow-hidden">
+                <h2 class="text-3xl font-normal text-white mb-4 md:mb-6 w-full text-center pb-3 md:pb-4 border-b border-white/5 shrink-0 relative z-10 bg-transparent backdrop-blur-sm" style="font-family: 'Libre Barcode 128 Text', cursive;">The Vault</h2>
                 
                 <!-- Repository List -->
-                <div class="flex flex-col gap-4 overflow-y-auto -mx-6 px-6 -mt-8 pt-8 pb-8 flex-1 min-h-0 no-scrollbar relative z-0">
+                <div class="flex flex-col gap-3 md:gap-4 overflow-y-auto -mx-4 px-4 md:-mx-6 md:px-6 -mt-8 pt-8 pb-6 md:pb-8 flex-1 min-h-0 no-scrollbar relative z-0">
                     
                     <!-- Entry 1 -->
                     <a href="https://github.com/deathbygin/retroachievements-3ds" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
                         <div class="flex-grow min-w-0 w-full md:w-auto">
                             <div class="auto-scroll-container mb-1" data-lines="2">
-                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">retroachievements-3ds</h3>
+                                <h3 class="text-xl md:text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">retroachievements-3ds</h3>
                             </div>
                             <div class="auto-scroll-container" data-lines="2">
                                 <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Integration layer for retroachievements on Nintendo 3DS hardware.</p>
                             </div>
                         </div>
-                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                        <div class="mt-3 md:mt-0 md:ml-4 text-right shrink-0 flex items-center gap-2">
                             <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">3DS</span>
                         </div>
                     </a>
@@ -270,13 +320,13 @@
                     <a href="https://github.com/deathbygin/3ds-hbmenu-themed" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
                         <div class="flex-grow min-w-0 w-full md:w-auto">
                             <div class="auto-scroll-container mb-1" data-lines="2">
-                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">3ds-hbmenu-themed</h3>
+                                <h3 class="text-xl md:text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">3ds-hbmenu-themed</h3>
                             </div>
                             <div class="auto-scroll-container" data-lines="2">
                                 <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Themed custom homebrew menu replacement for the Nintendo 3DS ecosystem.</p>
                             </div>
                         </div>
-                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                        <div class="mt-3 md:mt-0 md:ml-4 text-right shrink-0 flex items-center gap-2">
                             <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">3DS</span>
                         </div>
                     </a>
@@ -285,13 +335,13 @@
                     <a href="https://github.com/deathbygin/pixeldungeon-3ds" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
                         <div class="flex-grow min-w-0 w-full md:w-auto">
                             <div class="auto-scroll-container mb-1" data-lines="2">
-                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Pixel Dungeon 3DS</h3>
+                                <h3 class="text-xl md:text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Pixel Dungeon 3DS</h3>
                             </div>
                             <div class="auto-scroll-container" data-lines="2">
                                 <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Native Nintendo 3DS homebrew port of Pixel Dungeon maintaining 1:1 parity for mechanics, UI, and encounters.</p>
                             </div>
                         </div>
-                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                        <div class="mt-3 md:mt-0 md:ml-4 text-right shrink-0 flex items-center gap-2">
                             <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">3DS</span>
                         </div>
                     </a>
@@ -300,13 +350,13 @@
                     <a href="https://www.nexusmods.com/stardewvalley/mods/37938" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
                         <div class="flex-grow min-w-0 w-full md:w-auto">
                             <div class="auto-scroll-container mb-1" data-lines="2">
-                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Ferngill Arcadium</h3>
+                                <h3 class="text-xl md:text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Ferngill Arcadium</h3>
                             </div>
                             <div class="auto-scroll-container" data-lines="2">
                                 <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">A comprehensive arcade expansion mod framework for Stardew Valley.</p>
                             </div>
                         </div>
-                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                        <div class="mt-3 md:mt-0 md:ml-4 text-right shrink-0 flex items-center gap-2">
                             <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">Stardew Valley</span>
                         </div>
                     </a>
@@ -315,13 +365,13 @@
                     <a href="https://www.nexusmods.com/stardewvalley/mods/37103" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
                         <div class="flex-grow min-w-0 w-full md:w-auto">
                             <div class="auto-scroll-container mb-1" data-lines="2">
-                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Ferngill Forest</h3>
+                                <h3 class="text-xl md:text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Ferngill Forest</h3>
                             </div>
                             <div class="auto-scroll-container" data-lines="2">
                                 <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">A custom location and NPC mod for Stardew Valley.</p>
                             </div>
                         </div>
-                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                        <div class="mt-3 md:mt-0 md:ml-4 text-right shrink-0 flex items-center gap-2">
                             <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">Stardew Valley</span>
                         </div>
                     </a>
@@ -330,13 +380,13 @@
                     <a href="https://www.nexusmods.com/newvegas/mods/86337" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
                         <div class="flex-grow min-w-0 w-full md:w-auto">
                             <div class="auto-scroll-container mb-1" data-lines="2">
-                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">FNV Holotape Stories</h3>
+                                <h3 class="text-xl md:text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">FNV Holotape Stories</h3>
                             </div>
                             <div class="auto-scroll-container" data-lines="2">
                                 <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Adds narrative holotapes scattered around Fallout: New Vegas.</p>
                             </div>
                         </div>
-                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                        <div class="mt-3 md:mt-0 md:ml-4 text-right shrink-0 flex items-center gap-2">
                             <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">New Vegas</span>
                         </div>
                     </a>
@@ -345,19 +395,19 @@
                     <a href="https://gamebanana.com/collections/188022" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
                         <div class="flex-grow min-w-0 w-full md:w-auto">
                             <div class="auto-scroll-container mb-1" data-lines="2">
-                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">DBG's Custom Roster</h3>
+                                <h3 class="text-xl md:text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">DBG's Custom Roster</h3>
                             </div>
                             <div class="auto-scroll-container" data-lines="2">
                                 <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">A collection of Mario Kart 7 custom characters.</p>
                             </div>
                         </div>
-                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                        <div class="mt-3 md:mt-0 md:ml-4 text-right shrink-0 flex items-center gap-2">
                             <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">Mario Kart 7</span>
                         </div>
                     </a>
                     
                     <!-- decorative filler -->
-                    <div class="text-center opacity-40 mt-8 mb-4 font-light text-sm tracking-widest uppercase shrink-0">
+                    <div class="text-center opacity-40 mt-4 md:mt-8 mb-2 md:mb-4 font-light text-sm tracking-widest uppercase shrink-0">
                         <p>End of Directory</p>
                     </div>
 
@@ -365,14 +415,14 @@
             </section>
 
             <!-- RIGHT SECTION: Featured Project (Small) -->
-            <aside class="spatial-panel col-span-1 md:col-span-3 p-6 flex flex-col h-full">
-                <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">Featured</h2>
+            <aside class="spatial-panel col-span-1 md:col-span-3 p-5 md:p-6 flex flex-col h-full">
+                <h2 class="text-3xl font-normal text-white mb-4 md:mb-6 w-full text-center pb-3 md:pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">Featured</h2>
                 
                 <div class="auto-scroll-container mb-2 w-full shrink-0">
-                    <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Pixel Dungeon 3DS</h3>
+                    <h3 class="text-xl md:text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Pixel Dungeon 3DS</h3>
                 </div>
                 
-                <div class="mb-6 flex-grow w-full min-h-0 overflow-y-auto no-scrollbar">
+                <div class="mb-5 md:mb-6 flex-grow w-full min-h-0 overflow-y-auto no-scrollbar">
                     <p class="text-base text-cyan-100/70 font-normal leading-relaxed pr-1" style="font-family: 'Rajdhani', sans-serif;">
                         Native Nintendo 3DS homebrew port of Pixel Dungeon maintaining 1:1 parity for mechanics, UI layout, audio assets, item behavior, seed effects, and boss encounters.
                     </p>
@@ -386,7 +436,7 @@
         </div>
         
         <!-- FOOTER -->
-        <footer class="mt-auto py-6 text-center opacity-40 text-sm font-light">
+        <footer class="mt-auto py-4 md:py-6 text-center opacity-40 text-sm font-light">
             <p>DBG's Dungeon &copy; 2026</p>
         </footer>
     </main>
@@ -448,7 +498,12 @@
 
         // Run on initial load and whenever the window is resized
         window.addEventListener('load', checkAutoScroll);
-        window.addEventListener('resize', checkAutoScroll);
+        let lastScrollCheckWidth = window.innerWidth;
+        window.addEventListener('resize', () => {
+            if (window.innerWidth === lastScrollCheckWidth) return; // ignore mobile address-bar show/hide
+            lastScrollCheckWidth = window.innerWidth;
+            checkAutoScroll();
+        });
         
         // --- Particle System Logic ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -460,7 +515,11 @@
 
             let particles = [];
             let interactiveParticles = [];
-            const particleCount = 70;
+            const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+            const isSmall = window.innerWidth < 768;
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const particleCount = reduceMotion ? 20 : (isSmall || isTouch ? 32 : 70);
+            const glow = isSmall || isTouch ? 8 : 15;
 
             let mouse = { x: -1000, y: -1000 };
             
@@ -478,9 +537,19 @@
                 mouse.y = -1000;
             });
 
+            // Touch: embers move away from your finger, then settle when you lift it
+            window.addEventListener('touchstart', (e) => {
+                const t = e.touches[0];
+                if (t) { mouse.x = t.clientX; mouse.y = t.clientY; }
+            }, { passive: true });
+            const clearTouch = () => { mouse.x = -1000; mouse.y = -1000; };
+            window.addEventListener('touchend', clearTouch, { passive: true });
+            window.addEventListener('touchcancel', clearTouch, { passive: true });
+
             window.addEventListener('click', (e) => {
                 // Spawn a burst of particles on click
-                for(let i = 0; i < 20; i++) {
+                const burst = isTouch ? 14 : 20;
+                for(let i = 0; i < burst; i++) {
                     interactiveParticles.push(new InteractiveParticle(e.clientX, e.clientY, true));
                 }
             });
@@ -544,7 +613,7 @@
                     bgCtx.beginPath();
                     bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                     bgCtx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
-                    bgCtx.shadowBlur = 15;
+                    bgCtx.shadowBlur = glow;
                     bgCtx.shadowColor = `rgba(${this.color}, 0.9)`;
                     bgCtx.fill();
                 }
