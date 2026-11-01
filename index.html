@@ -121,7 +121,8 @@
 
         /* Soft neon glow for headers */
         .neon-glow {
-            text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            /* drop-shadow glows behind gradient text; text-shadow would paint over it */
+            filter: drop-shadow(0 0 12px rgba(0, 243, 255, 0.35));
         }
 
         /* Scrollbar styling for a sleek look */
