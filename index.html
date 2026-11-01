@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dbgdungeon</title>
+    
+    <!-- Tailwind CSS for rapid structural styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome for Social Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts for sleek, modern feel, Bungee Hairline for title -->
+    <link href="https://fonts.googleapis.com/css2?family=Bungee+Hairline&family=Libre+Barcode+128+Text&family=Rajdhani:wght@400;600;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Spatial UI Theme Setup */
+        :root {
+            --neon-blue: #00f3ff;
+            --dark-bg: #030509;
+            --spatial-bg: rgba(10, 18, 35, 0.4);
+            --spatial-border: rgba(0, 243, 255, 0.15);
+            --spatial-border-highlight: rgba(255, 255, 255, 0.2);
+            --spatial-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--dark-bg);
+            color: #e2f8ff;
+            margin: 0;
+            overflow-x: hidden;
+            /* Custom Default Cursor */
+            cursor: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L18 9 L11 11 L9 18 Z" fill="%23071326" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>') 4 4, auto;
+        }
+
+        /* Ambient Orbs for Spatial Depth & Cyberpunk glow */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #050a15 0%, #020305 100%);
+        }
+        .orb-1, .orb-2, .orb-3 {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.4;
+            mix-blend-mode: screen;
+        }
+        .orb-1 {
+            top: -20%; left: -10%; width: 60vw; height: 60vw;
+            background: radial-gradient(circle, rgba(0,243,255,0.3) 0%, transparent 70%);
+        }
+        .orb-2 {
+            bottom: -20%; right: -10%; width: 70vw; height: 70vw;
+            background: radial-gradient(circle, rgba(14, 52, 172, 0.4) 0%, transparent 70%);
+        }
+        .orb-3 {
+            top: 40%; left: 40%; width: 40vw; height: 40vw;
+            background: radial-gradient(circle, rgba(138, 43, 226, 0.15) 0%, transparent 70%);
+        }
+
+        /* 
+         * The Spatial Style: Glassmorphism + Holographic Depth
+         */
+        .spatial-panel {
+            background: var(--spatial-bg);
+            backdrop-filter: blur(40px) saturate(120%);
+            -webkit-backdrop-filter: blur(40px) saturate(120%);
+            border: 1px solid var(--spatial-border);
+            border-radius: 36px;
+            box-shadow: var(--spatial-shadow);
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Floating elements inside panels */
+        .spatial-block {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 1rem;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .spatial-block span.text-xs {
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Hover States for Spatial UI */
+        .spatial-hover:hover {
+            background: rgba(0, 243, 255, 0.1);
+            border-color: var(--spatial-border-highlight);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            cursor: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L18 9 L11 11 L9 18 Z" fill="%230d2859" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>') 4 4, pointer;
+        }
+
+        .spatial-text-hover {
+            transition: all 0.3s ease;
+        }
+        .spatial-text-hover:hover {
+            color: #fff;
+            text-shadow: 0 0 12px rgba(0, 243, 255, 0.6);
+            cursor: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L18 9 L11 11 L9 18 Z" fill="%230d2859" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>') 4 4, pointer;
+        }
+
+        /* Interactive Element Cursor Overrides */
+        a, button, .group {
+            cursor: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 4 L18 9 L11 11 L9 18 Z" fill="%230d2859" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>') 4 4, pointer;
+        }
+
+        /* Soft neon glow for headers */
+        .neon-glow {
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+        }
+
+        /* Scrollbar styling for a sleek look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { 
+            background: rgba(0, 243, 255, 0.2); 
+            border-radius: 10px; 
+        }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 243, 255, 0.4); }
+
+        /* Hide scrollbar for the vault list to maintain clean look */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Auto-Scroll Utilities (Unchanged) */
+        .auto-scroll-container {
+            overflow: hidden;
+            width: 100%;
+            position: relative;
+        }
+        .auto-scroll-text {
+            display: block;
+        }
+        @keyframes scroll-text {
+            0%, 15% { transform: translateY(0); }
+            85%, 100% { transform: translateY(calc(-1 * var(--scroll-dist))); }
+        }
+        .is-scrolling {
+            animation: scroll-text var(--scroll-duration, 5s) linear infinite alternate;
+        }
+        
+        /* Scanlines & Vignette Overlay */
+        .scanlines-vignette {
+            background: 
+                repeating-linear-gradient(
+                    to bottom,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 15, 30, 0.15) 2px,
+                    rgba(0, 15, 30, 0.15) 4px
+                ),
+                radial-gradient(
+                    circle at center,
+                    transparent 30%,
+                    rgba(2, 4, 8, 0.85) 100%
+                );
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col relative text-cyan-50">
+
+    <!-- Ambient Glassmorphism Background Elements -->
+    <div class="ambient-bg">
+        <div class="orb-1"></div>
+        <div class="orb-2"></div>
+        <div class="orb-3"></div>
+    </div>
+
+    <!-- Particle Ember Canvas -->
+    <canvas id="particleCanvas" class="fixed inset-0 w-full h-full z-0 pointer-events-none"></canvas>
+    
+    <!-- Background FX: Scanlines & Vignette -->
+    <div class="fixed inset-0 pointer-events-none z-[5] scanlines-vignette"></div>
+    
+    <!-- Foreground Interactive Particle Canvas -->
+    <canvas id="fg-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-50"></canvas>
+
+    <!-- Main Content Wrapper (Grid Layout) -->
+    <main class="relative z-10 w-full max-w-7xl mx-auto p-4 md:p-8 flex-grow flex flex-col gap-8">
+        
+        <!-- HEADER (Holographic Banner) -->
+        <header class="spatial-panel p-8 text-center flex flex-col justify-center items-center">
+            <h1 class="leading-none text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-500 neon-glow" style="font-family: 'Bungee Hairline', sans-serif;">
+                dbgdungeon
+            </h1>
+        </header>
+
+        <!-- 3-COLUMN GRID STRUCTURE -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch md:h-[85vh]">
+            
+            <!-- LEFT SECTION: Social Links (Small) -->
+            <aside class="spatial-panel col-span-1 md:col-span-2 p-6 flex flex-col items-center h-full">
+                <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">Connect</h2>
+                
+                <nav class="flex flex-row md:flex-col gap-5 w-full flex-wrap justify-center items-center flex-grow">
+                    <!-- CurseForge -->
+                    <a href="https://www.curseforge.com/members/deathbygin/projects" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="CurseForge">
+                        <i class="fa-solid fa-fire"></i>
+                    </a>
+                    <!-- Backloggd -->
+                    <a href="https://backloggd.com/u/deathbygin/" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="Backloggd">
+                        <i class="fa-solid fa-gamepad"></i>
+                    </a>
+                    <!-- Discord -->
+                    <a href="https://discord.com/users/443243554236792863" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="Discord">
+                        <i class="fa-brands fa-discord"></i>
+                    </a>
+                    <!-- GitHub -->
+                    <a href="https://github.com/deathbygin" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="GitHub">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    <!-- NexusMods -->
+                    <a href="https://www.nexusmods.com/profile/Deathbygin" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-cyan-100 relative group" title="NexusMods">
+                        <span class="font-black text-2xl font-sans leading-none mt-1">N</span>
+                    </a>
+                    <!-- Gamebanana -->
+                    <a href="https://gamebanana.com/members/5110417" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-cyan-100 relative group" title="Gamebanana">
+                        <span class="font-black text-xl font-sans leading-none mt-1 tracking-tighter">GB</span>
+                    </a>
+                    <!-- Ko-fi -->
+                    <a href="https://ko-fi.com/deathbygin" target="_blank" class="spatial-block spatial-hover w-14 h-14 rounded-full flex items-center justify-center text-xl text-cyan-100 relative group" title="Ko-fi">
+                        <i class="fa-solid fa-mug-hot"></i>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- CENTER SECTION: The Vault (Large) -->
+            <section class="spatial-panel col-span-1 md:col-span-7 pt-6 px-6 pb-0 flex flex-col h-full overflow-hidden">
+                <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0 relative z-10 bg-transparent backdrop-blur-sm" style="font-family: 'Libre Barcode 128 Text', cursive;">The Vault</h2>
+                
+                <!-- Repository List -->
+                <div class="flex flex-col gap-4 overflow-y-auto -mx-6 px-6 -mt-8 pt-8 pb-8 flex-1 min-h-0 no-scrollbar relative z-0">
+                    
+                    <!-- Entry 1 -->
+                    <a href="https://github.com/deathbygin/retroachievements-3ds" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="flex-grow min-w-0 w-full md:w-auto">
+                            <div class="auto-scroll-container mb-1" data-lines="2">
+                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">retroachievements-3ds</h3>
+                            </div>
+                            <div class="auto-scroll-container" data-lines="2">
+                                <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Integration layer for retroachievements on Nintendo 3DS hardware.</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                            <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">3DS</span>
+                        </div>
+                    </a>
+
+                    <!-- Entry 2 -->
+                    <a href="https://github.com/deathbygin/3ds-hbmenu-themed" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="flex-grow min-w-0 w-full md:w-auto">
+                            <div class="auto-scroll-container mb-1" data-lines="2">
+                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">3ds-hbmenu-themed</h3>
+                            </div>
+                            <div class="auto-scroll-container" data-lines="2">
+                                <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Themed custom homebrew menu replacement for the Nintendo 3DS ecosystem.</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                            <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">3DS</span>
+                        </div>
+                    </a>
+
+                    <!-- Entry 3 -->
+                    <a href="https://github.com/deathbygin/pixeldungeon-3ds" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="flex-grow min-w-0 w-full md:w-auto">
+                            <div class="auto-scroll-container mb-1" data-lines="2">
+                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Pixel Dungeon 3DS</h3>
+                            </div>
+                            <div class="auto-scroll-container" data-lines="2">
+                                <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Native Nintendo 3DS homebrew port of Pixel Dungeon maintaining 1:1 parity for mechanics, UI, and encounters.</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                            <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">3DS</span>
+                        </div>
+                    </a>
+
+                    <!-- Entry 4 -->
+                    <a href="https://www.nexusmods.com/stardewvalley/mods/37938" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="flex-grow min-w-0 w-full md:w-auto">
+                            <div class="auto-scroll-container mb-1" data-lines="2">
+                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Ferngill Arcadium</h3>
+                            </div>
+                            <div class="auto-scroll-container" data-lines="2">
+                                <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">A comprehensive arcade expansion mod framework for Stardew Valley.</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                            <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">Stardew Valley</span>
+                        </div>
+                    </a>
+
+                    <!-- Entry 5 -->
+                    <a href="https://www.nexusmods.com/stardewvalley/mods/37103" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="flex-grow min-w-0 w-full md:w-auto">
+                            <div class="auto-scroll-container mb-1" data-lines="2">
+                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Ferngill Forest</h3>
+                            </div>
+                            <div class="auto-scroll-container" data-lines="2">
+                                <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">A custom location and NPC mod for Stardew Valley.</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                            <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">Stardew Valley</span>
+                        </div>
+                    </a>
+
+                    <!-- Entry 6 -->
+                    <a href="https://www.nexusmods.com/newvegas/mods/86337" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="flex-grow min-w-0 w-full md:w-auto">
+                            <div class="auto-scroll-container mb-1" data-lines="2">
+                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">FNV Holotape Stories</h3>
+                            </div>
+                            <div class="auto-scroll-container" data-lines="2">
+                                <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Adds narrative holotapes scattered around Fallout: New Vegas.</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                            <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">New Vegas</span>
+                        </div>
+                    </a>
+
+                    <!-- Entry 7 -->
+                    <a href="https://gamebanana.com/collections/188022" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="flex-grow min-w-0 w-full md:w-auto">
+                            <div class="auto-scroll-container mb-1" data-lines="2">
+                                <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">DBG's Custom Roster</h3>
+                            </div>
+                            <div class="auto-scroll-container" data-lines="2">
+                                <p class="text-base text-cyan-100/60 font-normal auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">A collection of Mario Kart 7 custom characters.</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0 text-right shrink-0 flex items-center gap-2">
+                            <span class="text-xs bg-white/5 border border-white/10 px-3 py-1 text-cyan-100/70">Mario Kart 7</span>
+                        </div>
+                    </a>
+                    
+                    <!-- decorative filler -->
+                    <div class="text-center opacity-40 mt-8 mb-4 font-light text-sm tracking-widest uppercase shrink-0">
+                        <p>End of Directory</p>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- RIGHT SECTION: Featured Project (Small) -->
+            <aside class="spatial-panel col-span-1 md:col-span-3 p-6 flex flex-col h-full">
+                <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">Featured</h2>
+                
+                <div class="auto-scroll-container mb-2 w-full shrink-0">
+                    <h3 class="text-2xl font-bold text-white spatial-text-hover auto-scroll-text" style="font-family: 'Rajdhani', sans-serif;">Pixel Dungeon 3DS</h3>
+                </div>
+                
+                <div class="mb-6 flex-grow w-full min-h-0 overflow-y-auto no-scrollbar">
+                    <p class="text-base text-cyan-100/70 font-normal leading-relaxed pr-1" style="font-family: 'Rajdhani', sans-serif;">
+                        Native Nintendo 3DS homebrew port of Pixel Dungeon maintaining 1:1 parity for mechanics, UI layout, audio assets, item behavior, seed effects, and boss encounters.
+                    </p>
+                </div>
+                
+                <a href="https://github.com/deathbygin/pixeldungeon-3ds" target="_blank" class="spatial-block spatial-hover text-center uppercase font-bold tracking-widest w-full py-4 shrink-0 text-sm text-cyan-50">
+                    View Project
+                </a>
+            </aside>
+
+        </div>
+        
+        <!-- FOOTER -->
+        <footer class="mt-auto py-6 text-center opacity-40 text-sm font-light">
+            <p>DBG's Dungeon &copy; 2026</p>
+        </footer>
+    </main>
+
+    <!-- Auto-scroll logic for overflowing text -->
+    <script>
+        // Disable right-click context menu globally
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        function checkAutoScroll() {
+            const containers = document.querySelectorAll('.auto-scroll-container');
+            containers.forEach(container => {
+                const text = container.querySelector('.auto-scroll-text');
+                if (!text) return;
+                
+                // Temporarily disable animation to measure accurately
+                text.classList.remove('is-scrolling');
+                text.style.transform = 'none';
+                
+                const linesAttr = container.getAttribute('data-lines');
+                const maxLines = linesAttr ? parseInt(linesAttr, 10) : 2;
+                
+                container.style.maxHeight = 'none'; // Reset to measure full unconstrained height
+                
+                // Calculate the height of target lines based on computed line-height
+                const computedStyle = window.getComputedStyle(text);
+                let lineHeight = parseFloat(computedStyle.lineHeight);
+                
+                // Fallback if line-height returns "normal"
+                if (isNaN(lineHeight)) {
+                    lineHeight = parseFloat(computedStyle.fontSize) * 1.2;
+                }
+                
+                const targetHeight = lineHeight * maxLines;
+                
+                // Lock container height to exactly maxLines
+                container.style.maxHeight = targetHeight + 'px';
+
+                // Read heights after constraint is applied (or bypassed for fill)
+                const containerHeight = container.clientHeight;
+                const textHeight = text.offsetHeight;
+                
+                // If text exceeds container height (with a small buffer for sub-pixel rendering), setup vertical scroll
+                if (textHeight > containerHeight + 2) {
+                    const dist = textHeight - containerHeight;
+                    
+                    text.style.setProperty('--scroll-dist', `${dist}px`);
+                    
+                    // Dynamically calculate duration (slower for longer text, minimum 3s)
+                    const duration = Math.max(3, dist / 15) + 's';
+                    text.style.setProperty('--scroll-duration', duration);
+                    
+                    // Force a reflow before adding the class back to restart the animation
+                    void text.offsetWidth;
+                    text.classList.add('is-scrolling');
+                }
+            });
+        }
+
+        // Run on initial load and whenever the window is resized
+        window.addEventListener('load', checkAutoScroll);
+        window.addEventListener('resize', checkAutoScroll);
+        
+        // --- Particle System Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const bgCanvas = document.getElementById('particleCanvas');
+            const bgCtx = bgCanvas.getContext('2d');
+            
+            const fgCanvas = document.getElementById('fg-canvas');
+            const fgCtx = fgCanvas.getContext('2d');
+
+            let particles = [];
+            let interactiveParticles = [];
+            const particleCount = 70;
+
+            let mouse = { x: -1000, y: -1000 };
+            
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+                // Add subtle trail particles
+                if (Math.random() > 0.4) {
+                    interactiveParticles.push(new InteractiveParticle(mouse.x, mouse.y));
+                }
+            });
+
+            window.addEventListener('mouseout', () => {
+                mouse.x = -1000;
+                mouse.y = -1000;
+            });
+
+            window.addEventListener('click', (e) => {
+                // Spawn a burst of particles on click
+                for(let i = 0; i < 20; i++) {
+                    interactiveParticles.push(new InteractiveParticle(e.clientX, e.clientY, true));
+                }
+            });
+
+            function resizeCanvas() {
+                bgCanvas.width = window.innerWidth;
+                bgCanvas.height = window.innerHeight;
+                fgCanvas.width = window.innerWidth;
+                fgCanvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * window.innerWidth;
+                    this.y = Math.random() * window.innerHeight;
+                    // Very slow drift
+                    this.vx = (Math.random() - 0.5) * 0.3;
+                    this.vy = (Math.random() - 0.5) * 0.3 - 0.2; // Slight upward bias for embers
+                    this.size = Math.random() * 2.5 + 1.5; // 1.5 to 4 pixels for better visibility
+                    this.alpha = Math.random() * 0.6 + 0.1; // Initial alpha between 0.1 and 0.7
+                    // Randomize alpha fading speed and direction
+                    this.alphaChange = (Math.random() * 0.005 + 0.002) * (Math.random() < 0.5 ? 1 : -1);
+                    // Randomly choose between grayish-blue and cyan base colors
+                    this.color = Math.random() > 0.4 ? '110, 160, 200' : '0, 243, 255';
+                }
+
+                update() {
+                    // Repel from cursor
+                    const dx = this.x - mouse.x;
+                    const dy = this.y - mouse.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const repelRadius = 150;
+                    
+                    if (distance < repelRadius) {
+                        const force = (repelRadius - distance) / repelRadius;
+                        const angle = Math.atan2(dy, dx);
+                        // Push away from cursor smoothly
+                        this.x += Math.cos(angle) * force * 1.5;
+                        this.y += Math.sin(angle) * force * 1.5;
+                    }
+
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // Alpha oscillation (fading glow effect)
+                    this.alpha += this.alphaChange;
+                    if (this.alpha <= 0.05 || this.alpha >= 0.7) {
+                        this.alphaChange *= -1; // Reverse fade direction
+                    }
+
+                    // Wrap around edges
+                    if (this.x < -10) this.x = window.innerWidth + 10;
+                    if (this.x > window.innerWidth + 10) this.x = -10;
+                    if (this.y < -10) this.y = window.innerHeight + 10;
+                    if (this.y > window.innerHeight + 10) this.y = -10;
+                }
+
+                draw() {
+                    bgCtx.beginPath();
+                    bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    bgCtx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
+                    bgCtx.shadowBlur = 15;
+                    bgCtx.shadowColor = `rgba(${this.color}, 0.9)`;
+                    bgCtx.fill();
+                }
+            }
+
+            class InteractiveParticle {
+                constructor(x, y, isBurst = false) {
+                    this.x = x;
+                    this.y = y;
+                    const speedMultiplier = isBurst ? 4 : 1;
+                    this.vx = (Math.random() - 0.5) * 2.5 * speedMultiplier;
+                    this.vy = (Math.random() - 0.5) * 2.5 * speedMultiplier;
+                    this.size = Math.random() * 2 + 1;
+                    this.alpha = 1;
+                    this.fadeRate = isBurst ? 0.015 : 0.03;
+                    this.color = '0, 243, 255'; // Bright cyan/blue
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.alpha -= this.fadeRate;
+                }
+
+                draw() {
+                    fgCtx.beginPath();
+                    fgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    fgCtx.fillStyle = `rgba(${this.color}, ${Math.max(0, this.alpha)})`;
+                    fgCtx.shadowBlur = 10;
+                    fgCtx.shadowColor = `rgba(${this.color}, ${Math.max(0, this.alpha)})`;
+                    fgCtx.fill();
+                }
+            }
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+
+            function animateParticles() {
+                bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+                fgCtx.clearRect(0, 0, fgCanvas.width, fgCanvas.height);
+                
+                // Draw background embers
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                
+                // Update and draw interactive blue particles
+                for (let i = interactiveParticles.length - 1; i >= 0; i--) {
+                    const p = interactiveParticles[i];
+                    p.update();
+                    p.draw();
+                    
+                    // Remove dead particles
+                    if (p.alpha <= 0) {
+                        interactiveParticles.splice(i, 1);
+                    }
+                }
+
+                requestAnimationFrame(animateParticles);
+            }
+            
+            // Start animation loop
+            animateParticles();
+        });
+    </script>
+</body>
+</html>
