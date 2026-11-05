@@ -263,7 +263,7 @@
                 <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">The Vault</h2>
                 
                 <!-- Repository List -->
-                <div class="flex flex-col gap-4 overflow-y-auto -mx-6 px-6 -mt-8 pt-8 pb-8 flex-1 min-h-0 no-scrollbar vault-fade">
+                <div class="flex flex-col gap-4 overflow-y-auto -mx-6 px-6 -mt-8 pt-8 pb-8 flex-1 min-h-0 no-scrollbar vault-fade project-links-container">
                     
                     <!-- Entry 1 -->
                     <a href="https://github.com/deathbygin/retroachievements-3ds" target="_blank" class="spatial-block spatial-hover flex flex-col md:flex-row justify-between items-start md:items-center">
@@ -379,7 +379,7 @@
             </section>
 
             <!-- RIGHT SECTION: Featured Project (Small) -->
-            <aside class="spatial-panel col-span-1 md:col-span-3 p-6 flex flex-col h-full md:min-h-0">
+            <aside class="spatial-panel col-span-1 md:col-span-3 p-6 flex flex-col h-full md:min-h-0 featured-container">
                 <h2 class="text-3xl font-normal text-white mb-6 w-full text-center pb-4 border-b border-white/5 shrink-0" style="font-family: 'Libre Barcode 128 Text', cursive;">Featured</h2>
                 
                 <div class="auto-scroll-container mb-2 w-full shrink-0">
@@ -405,7 +405,33 @@
         </footer>
     </main>
 
-    <!-- Auto-scroll logic for overflowing text -->
+    <!-- KO-FI MODAL OVERLAY -->
+    <div id="kofi-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-md opacity-0 transition-opacity duration-300">
+        <div id="kofi-modal-content" class="spatial-panel p-8 max-w-md w-full mx-4 flex flex-col items-center text-center transform scale-95 transition-transform duration-300">
+            <!-- Ko-fi Icon -->
+            <div class="mb-4 relative w-16 h-16 flex items-center justify-center bg-white/5 rounded-full border border-white/10 spatial-shadow">
+                <i class="fa-solid fa-mug-hot text-3xl text-cyan-300 neon-glow"></i>
+            </div>
+            
+            <h3 class="text-3xl font-bold text-white mb-3" style="font-family: 'Rajdhani', sans-serif;">Show Your Support</h3>
+            <p class="text-cyan-100/70 mb-8 leading-relaxed font-normal" style="font-family: 'Rajdhani', sans-serif;">
+                Donations help keep projects like these updated and free. Would you consider buying me a coffee before checking out the project?
+            </p>
+            
+            <div class="flex flex-col w-full gap-4">
+                <!-- Donate Button -->
+                <button id="btn-donate" class="spatial-block spatial-hover w-full text-cyan-50 font-bold tracking-widest uppercase text-sm py-3 flex items-center justify-center gap-2 bg-[rgba(0,243,255,0.05)] border-[rgba(0,243,255,0.3)]">
+                    Sure, I'll donate
+                </button>
+                <!-- Skip Button -->
+                <button id="btn-skip" class="spatial-block spatial-hover w-full text-cyan-100/50 hover:text-cyan-50 font-bold tracking-widest uppercase text-sm py-3 transition-colors border-transparent hover:border-white/10">
+                    Not this time
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-scroll and interaction logic -->
     <script>
         // Disable right-click context menu globally
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -416,53 +442,106 @@
                 const text = container.querySelector('.auto-scroll-text');
                 if (!text) return;
                 
-                // Temporarily disable animation to measure accurately
                 text.classList.remove('is-scrolling');
                 text.style.transform = 'none';
                 
                 const linesAttr = container.getAttribute('data-lines');
                 const maxLines = linesAttr ? parseInt(linesAttr, 10) : 2;
                 
-                container.style.maxHeight = 'none'; // Reset to measure full unconstrained height
+                container.style.maxHeight = 'none'; 
                 
-                // Calculate the height of target lines based on computed line-height
                 const computedStyle = window.getComputedStyle(text);
                 let lineHeight = parseFloat(computedStyle.lineHeight);
                 
-                // Fallback if line-height returns "normal"
                 if (isNaN(lineHeight)) {
                     lineHeight = parseFloat(computedStyle.fontSize) * 1.2;
                 }
                 
                 const targetHeight = lineHeight * maxLines;
-                
-                // Lock container height to exactly maxLines
                 container.style.maxHeight = targetHeight + 'px';
 
-                // Read heights after constraint is applied (or bypassed for fill)
                 const containerHeight = container.clientHeight;
                 const textHeight = text.offsetHeight;
                 
-                // If text exceeds container height (with a small buffer for sub-pixel rendering), setup vertical scroll
                 if (textHeight > containerHeight + 2) {
                     const dist = textHeight - containerHeight;
                     
                     text.style.setProperty('--scroll-dist', `${dist}px`);
-                    
-                    // Dynamically calculate duration (slower for longer text, minimum 3s)
                     const duration = Math.max(3, dist / 15) + 's';
                     text.style.setProperty('--scroll-duration', duration);
                     
-                    // Force a reflow before adding the class back to restart the animation
                     void text.offsetWidth;
                     text.classList.add('is-scrolling');
                 }
             });
         }
 
-        // Run on initial load and whenever the window is resized
         window.addEventListener('load', checkAutoScroll);
         window.addEventListener('resize', checkAutoScroll);
+
+        // --- Ko-Fi Modal Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('kofi-modal');
+            const modalContent = document.getElementById('kofi-modal-content');
+            const btnSkip = document.getElementById('btn-skip');
+            const btnDonate = document.getElementById('btn-donate');
+            let pendingUrl = '';
+
+            // Attach event listeners to all links in The Vault and Featured Project
+            const projectLinks = document.querySelectorAll('.project-links-container a, .featured-container a');
+
+            projectLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    pendingUrl = link.href;
+                    
+                    // Display Modal
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    // Allow DOM to update before triggering transition
+                    setTimeout(() => {
+                        modal.classList.remove('opacity-0');
+                        modalContent.classList.remove('scale-95');
+                        modalContent.classList.add('scale-100');
+                    }, 10);
+                });
+            });
+
+            function closeModal() {
+                modal.classList.add('opacity-0');
+                modalContent.classList.remove('scale-100');
+                modalContent.classList.add('scale-95');
+                
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            }
+
+            // Route 1: Skipping donation
+            btnSkip.addEventListener('click', () => {
+                if (pendingUrl) window.open(pendingUrl, '_blank');
+                closeModal();
+            });
+
+            // Route 2: Donating
+            btnDonate.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Open Ko-Fi first
+                window.open('https://ko-fi.com/deathbygin', '_blank');
+                // Open the actual project requested
+                if (pendingUrl) window.open(pendingUrl, '_blank');
+                closeModal();
+            });
+
+            // Optional: Close modal if clicking outside the panel
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    if (pendingUrl) window.open(pendingUrl, '_blank');
+                    closeModal();
+                }
+            });
+        });
         
         // --- Particle System Logic ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -481,7 +560,6 @@
             window.addEventListener('mousemove', (e) => {
                 mouse.x = e.clientX;
                 mouse.y = e.clientY;
-                // Add subtle trail particles
                 if (Math.random() > 0.4) {
                     interactiveParticles.push(new InteractiveParticle(mouse.x, mouse.y));
                 }
@@ -493,7 +571,6 @@
             });
 
             window.addEventListener('click', (e) => {
-                // Spawn a burst of particles on click
                 for(let i = 0; i < 20; i++) {
                     interactiveParticles.push(new InteractiveParticle(e.clientX, e.clientY, true));
                 }
@@ -512,19 +589,15 @@
                 constructor() {
                     this.x = Math.random() * window.innerWidth;
                     this.y = Math.random() * window.innerHeight;
-                    // Very slow drift
                     this.vx = (Math.random() - 0.5) * 0.3;
-                    this.vy = (Math.random() - 0.5) * 0.3 - 0.2; // Slight upward bias for embers
-                    this.size = Math.random() * 2.5 + 1.5; // 1.5 to 4 pixels for better visibility
-                    this.alpha = Math.random() * 0.6 + 0.1; // Initial alpha between 0.1 and 0.7
-                    // Randomize alpha fading speed and direction
+                    this.vy = (Math.random() - 0.5) * 0.3 - 0.2; 
+                    this.size = Math.random() * 2.5 + 1.5; 
+                    this.alpha = Math.random() * 0.6 + 0.1; 
                     this.alphaChange = (Math.random() * 0.005 + 0.002) * (Math.random() < 0.5 ? 1 : -1);
-                    // Randomly choose between grayish-blue and cyan base colors
                     this.color = Math.random() > 0.4 ? '110, 160, 200' : '0, 243, 255';
                 }
 
                 update() {
-                    // Repel from cursor
                     const dx = this.x - mouse.x;
                     const dy = this.y - mouse.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
@@ -533,7 +606,6 @@
                     if (distance < repelRadius) {
                         const force = (repelRadius - distance) / repelRadius;
                         const angle = Math.atan2(dy, dx);
-                        // Push away from cursor smoothly
                         this.x += Math.cos(angle) * force * 1.5;
                         this.y += Math.sin(angle) * force * 1.5;
                     }
@@ -541,13 +613,11 @@
                     this.x += this.vx;
                     this.y += this.vy;
 
-                    // Alpha oscillation (fading glow effect)
                     this.alpha += this.alphaChange;
                     if (this.alpha <= 0.05 || this.alpha >= 0.7) {
-                        this.alphaChange *= -1; // Reverse fade direction
+                        this.alphaChange *= -1;
                     }
 
-                    // Wrap around edges
                     if (this.x < -10) this.x = window.innerWidth + 10;
                     if (this.x > window.innerWidth + 10) this.x = -10;
                     if (this.y < -10) this.y = window.innerHeight + 10;
@@ -574,7 +644,7 @@
                     this.size = Math.random() * 2 + 1;
                     this.alpha = 1;
                     this.fadeRate = isBurst ? 0.015 : 0.03;
-                    this.color = '0, 243, 255'; // Bright cyan/blue
+                    this.color = '0, 243, 255';
                 }
 
                 update() {
@@ -601,19 +671,16 @@
                 bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
                 fgCtx.clearRect(0, 0, fgCanvas.width, fgCanvas.height);
                 
-                // Draw background embers
                 particles.forEach(p => {
                     p.update();
                     p.draw();
                 });
                 
-                // Update and draw interactive blue particles
                 for (let i = interactiveParticles.length - 1; i >= 0; i--) {
                     const p = interactiveParticles[i];
                     p.update();
                     p.draw();
                     
-                    // Remove dead particles
                     if (p.alpha <= 0) {
                         interactiveParticles.splice(i, 1);
                     }
@@ -622,7 +689,6 @@
                 requestAnimationFrame(animateParticles);
             }
             
-            // Start animation loop
             animateParticles();
         });
     </script>
